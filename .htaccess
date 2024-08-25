@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Redirige todas las solicitudes a index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Redirigir errores HTTP
+ErrorDocument 404 /public/views/404.php
+ErrorDocument 403 /public/views/403.php
