@@ -88,15 +88,6 @@ class ImageController
       $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
       return $images;
-
-      // if ($images) {
-      //   foreach ($images as $image) {
-      //     $imagePath = '../model/uploads/images/' . $image['filename'];
-      //     echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "' />";
-      //   }
-      // } else {
-      //   echo "<p>No images found.</p>";
-      // }
     } catch (Exception $e) {
       return [
         'data' => [null],
@@ -121,18 +112,6 @@ class ImageController
       $image = $stmt->fetch(PDO::FETCH_ASSOC);
 
       return $image ?: null;
-      // if ($image) {
-      //   $imagePath = '../model/uploads/images/' . $image['filename'];
-      //   echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "' />";
-      //   echo "<h3>" . htmlspecialchars($image['title']) . "</h3>";
-      //   echo "<p>" . htmlspecialchars($image['description']) . "</p>";
-      //   echo "<p>Uploaded on: " . $image['created_at'] . "</p>";
-      //   echo "<p>Last updated: " . $image['updated_at'] . "</p>";
-      //   echo "</div>";
-      // } else {
-      //   echo "<p>Image not found.</p>";
-      // }
-
     } catch (Exception $e) {
       return null;
     }
