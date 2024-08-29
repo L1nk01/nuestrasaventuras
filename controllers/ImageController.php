@@ -26,10 +26,10 @@ class ImageController
     if (isset($_FILES['new-picture']) && $_FILES['new-picture']['error'] === UPLOAD_ERR_OK) {
       $file = $_FILES['new-picture'];
 
-      $file['name'] = FileUtils::generateRandomFilename(16) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
-
-      $mimetype = $file['type'];
-      $filesize = $file['size'];
+      $file_extension = "." . pathinfo($file['name'], PATHINFO_EXTENSION); // .jpg, .png, .jpeg...
+      $file['name'] = FileUtils::generateRandomFilename(16);
+      $mimetype = $file['type']; // image/jpg, image/png, image/jpeg
+      $file_size = $file['size']; // in bytes
       $title = isset($_POST['image-title']) ? htmlspecialchars($_POST['image-title']) : '';
       $description = isset($_POST['description']) ? htmlspecialchars($_POST['description']) : '';
 
@@ -50,26 +50,32 @@ class ImageController
 
         $postId = $this->dbh->lastInsertId();
 
-        move_uploaded_file($file['tmp_name'], dirname(__DIR__, 1) . '/model/uploads/images/' . $file['name']);
+        $imagePath = dirname(__DIR__, 1) . '/model/uploads/images/' . $file['name'] . $file_extension;
+        move_uploaded_file($file['tmp_name'], $imagePath);
 
-        $stmt = $this->dbh->prepare("INSERT INTO images (post_id, filename, filetype, filesize, title, description) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $this->dbh->prepare("INSERT INTO images (post_id, file_name, file_extension, file_size, title, description) VALUES (?, ?, ?, ?, ?, ?)");
 
         $stmt->bindParam(1, $postId);
         $stmt->bindParam(2, $file['name']);
-        $stmt->bindParam(3, $mimetype);
-        $stmt->bindParam(4, $filesize);
+        $stmt->bindParam(3, $file_extension);
+        $stmt->bindParam(4, $file_size);
         $stmt->bindParam(5, $title);
         $stmt->bindParam(6, $description);
 
         $stmt->execute();
 
-        $this->dbh->commit();
+        if ($this->createThumbnail($imagePath, 500, 500)) {
+          $this->dbh->commit();
+          header("Location: /page/gallery");
+          exit();
+        } else {
+          $this->dbh->rollBack();
+          echo "Error saving thumbnail.";
+        }
 
-        header("Location: /page/gallery");
-        exit();
       } catch (Exception $e) {
         $this->dbh->rollBack();
-        echo "Error al guardar la información en el servidor " . $e->getMessage();
+        echo "Error while saving data to server " . $e->getMessage();
       }
     } else {
       header("Location: /page/no_file_selected");
@@ -77,12 +83,25 @@ class ImageController
     }
   }
 
-  public function fetchAll(): ?array
+  public function fetch(?int $imageId = null): ?array
   {
-    $query = "SELECT image_id, filename, title FROM images";
+    $query = "SELECT i.image_id, i.file_name, i.file_extension, i.title, i.description, p.created_at, p.updated_at
+    FROM images i
+    JOIN posts p ON i.post_id = p.post_id";
+
+    if ($imageId !== null) {
+      $query .= " WHERE i.image_id = :image_id";
+    }
+
+    $query .= " ORDER BY p.created_at DESC";
 
     try {
       $stmt = $this->dbh->prepare($query);
+
+      if ($imageId !== null) {
+        $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
+      }
+
       $stmt->execute();
 
       $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -95,25 +114,74 @@ class ImageController
       ];
     }
   }
-
-  public function fetch($imageId): ?array
-  {
-    $query = "SELECT i.image_id, i.filename, i.title, i.description, p.created_at, p.updated_at
-              FROM images i
-              JOIN posts p ON i.post_id = p.post_id
-              WHERE i.image_id = :image_id";
-
+  
+  private function createThumbnail($source, $width, $height) {
     try {
-      $stmt = $this->dbh->prepare($query);
+      $image = new Imagick($source);
 
-      $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
-      $stmt->execute();
+      $image->cropThumbnailImage($width, $height);
 
-      $image = $stmt->fetch(PDO::FETCH_ASSOC);
+      $image->setImageCompressionQuality(70);
 
-      return $image ?: null;
+      $image->setImageFormat('jpeg');
+
+      if (!is_dir(dirname(__DIR__, 1) . "/model/uploads/thumbnails")) {
+        mkdir(dirname(__DIR__, 1) . "/model/uploads/thumbnails", 0777);
+      }
+
+      $thumbnailPath = dirname(__DIR__, 1) . "/model/uploads/thumbnails/" . pathinfo($source, PATHINFO_FILENAME) . "_thumbnail." . pathinfo($source, PATHINFO_EXTENSION);
+      $image->writeImage($thumbnailPath);
+
+      $image->clear();
+      $image->destroy();
+
+      return true;
     } catch (Exception $e) {
-      return null;
+      echo "Error creating thumbnail: " . $e->getMessage();
+      return false;
     }
   }
+
+  // Estos dos métodos quedarán aquí enterrados por si los necesito en el futuro,
+  // espero que no olvide su existencia.
+
+  // public function fetchAll(): ?array
+  // {
+  //   $query = "SELECT image_id, filename, title FROM images";
+
+  //   try {
+  //     $stmt = $this->dbh->prepare($query);
+  //     $stmt->execute();
+
+  //     $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  //     return $images;
+  //   } catch (Exception $e) {
+  //     return [
+  //       'data' => [null],
+  //       'error' => "Error fetching images: " . $e->getMessage()
+  //     ];
+  //   }
+  // }
+
+//   public function fetch($imageId): ?array
+//   {
+//     $query = "SELECT i.image_id, i.filename, i.title, i.description, p.created_at, p.updated_at
+//               FROM images i
+//               JOIN posts p ON i.post_id = p.post_id
+//               WHERE i.image_id = :image_id";
+
+//     try {
+//       $stmt = $this->dbh->prepare($query);
+
+//       $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
+//       $stmt->execute();
+
+//       $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+//       return $image ?: null;
+//     } catch (Exception $e) {
+//       return null;
+//     }
+//   }
 }
