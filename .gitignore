@@ -1,0 +1,5 @@
+# Ignore uploaded files
+/uploads/images/*
+/uploads/thumbnails/*
+!/uploads/images/.gitkeep
+!/uploads/thumbnails/.gitkeep
