@@ -53,6 +53,12 @@ class ImageController
         $imagePath = dirname(__DIR__, 1) . '/model/uploads/images/' . $file['name'] . $file_extension;
         move_uploaded_file($file['tmp_name'], $imagePath);
 
+        $image = new Imagick($imagePath);
+        $image->setImageCompressionQuality(70); // 70% of the original quality
+        $image->writeImage($imagePath);
+        $image->clear();
+        $image->destroy();
+
         $stmt = $this->dbh->prepare("INSERT INTO images (post_id, file_name, file_extension, file_size, title, description) VALUES (?, ?, ?, ?, ?, ?)");
 
         $stmt->bindParam(1, $postId);
@@ -121,7 +127,7 @@ class ImageController
 
       $image->cropThumbnailImage($width, $height);
 
-      $image->setImageCompressionQuality(70);
+      $image->setImageCompressionQuality(50);
 
       $image->setImageFormat('jpeg');
 
@@ -129,7 +135,7 @@ class ImageController
         mkdir(dirname(__DIR__, 1) . "/model/uploads/thumbnails", 0777);
       }
 
-      $thumbnailPath = dirname(__DIR__, 1) . "/model/uploads/thumbnails/" . pathinfo($source, PATHINFO_FILENAME) . "_thumbnail." . pathinfo($source, PATHINFO_EXTENSION);
+      $thumbnailPath = dirname(__DIR__, 1) . "/model/uploads/thumbnails/" . pathinfo($source, PATHINFO_FILENAME) . "_thumbnail.jpeg";
       $image->writeImage($thumbnailPath);
 
       $image->clear();
