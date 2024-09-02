@@ -20,7 +20,6 @@ $(document).ready(function () {
   });
 
   $("#uploaded-picture-preview button").on('click', function () {
-    console.log("trujillo");
     $("#upload-picture-button").val("");
 
     $("#uploaded-picture-preview img")
@@ -30,5 +29,36 @@ $(document).ready(function () {
     $("#uploaded-picture-preview button").removeClass('show-preview-button');
 
     $(".file-status").text("No se ha elegido un archivo");
+  });
+
+  $("#viewPictureModal").on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var imageId = button.data('image-id');
+    var modal = $(this);
+
+    if (imageId) {
+      $.ajax({
+        url: '/image/fetch',
+        type: 'GET',
+        data: { id: imageId},
+        dataType: 'json',
+        success: function (data) {
+          console.log('AJAX Response: ', data);
+
+          if (data.error) {
+            console.error(data.error);
+            return;
+          }
+
+          modal.find('.modal-title').text(data.title);
+          modal.find('.modal-body img').attr('src', '../model/uploads/images/' + data.file_name + data.file_extension);
+          modal.find('.modal-body p').text(data.description);
+        },
+        error: function (xhr, status, error) {
+          console.error('Error fetching image data: ' + error);
+          console.log('Response: ', xhr.responseText);
+        }
+      });
+    }
   });
 });
