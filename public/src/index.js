@@ -40,7 +40,7 @@ $(document).ready(function () {
       $.ajax({
         url: '/image/fetch',
         type: 'GET',
-        data: { id: imageId},
+        data: { id: imageId },
         dataType: 'json',
         success: function (data) {
           console.log('AJAX Response: ', data);
