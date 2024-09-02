@@ -5,7 +5,7 @@ require_once dirname(__DIR__, 2) . '/controllers/ImageController.php';
 global $database;
 $imageController = new ImageController($database);
 
-$images = $imageController->fetchAll();
+$images = $imageController->fetchThumbnails();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,11 +36,13 @@ $images = $imageController->fetchAll();
 </head>
 
 <body>
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <!-- Upload Picture Form -->
+  <div class="modal fade" id="uploadPictureModal" tabindex="-1" aria-labelledby="uploadPictureModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Subir una imagen</h5>
+          <h5 class="modal-title" id="uploadPictureModalLabel">Subir una imagen</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -72,6 +74,28 @@ $images = $imageController->fetchAll();
     </div>
   </div>
 
+  <!-- View Picture Modal -->
+  <div class="modal fade" id="viewPictureModal" tabindex="-1" aria-labelledby="viewPictureModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="viewPictureModalLabel">Modal title</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <img src="" alt="" />
+          <p></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <section class="navbar">
     <img src="/public/assets/brand/nuestras_aventuras.svg" alt="Nuestras Aventuras" />
     <ul>
@@ -85,7 +109,7 @@ $images = $imageController->fetchAll();
 
   <section class="gallery">
     <button class="default-button full-width-button" type="button" class="btn btn-primary" data-bs-toggle="modal"
-      data-bs-target="#exampleModal">
+      data-bs-target="#uploadPictureModal">
       <img src="/public/assets/icons/upload.svg" />Subir una imagen
     </button>
 
@@ -95,8 +119,11 @@ $images = $imageController->fetchAll();
         echo "<p>Error: " . htmlspecialchars($images['error']) . "</p>";
       } else {
         foreach ($images as $image) {
-          $imagePath = '../model/uploads/images/' . $image['filename'];
-          echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "' />";
+          $imagePath = '../model/uploads/thumbnails/' . $image['file_name'] . "_thumbnail.jpeg" ;
+          echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "'
+                data-bs-toggle='modal'
+                data-bs-target='#viewPictureModal'
+                data-image-id='" . $image['image_id'] . "'";
         }
       }
       ?>
