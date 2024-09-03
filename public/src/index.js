@@ -43,20 +43,22 @@ $(document).ready(function () {
         data: { id: imageId },
         dataType: 'json',
         success: function (data) {
-          console.log('AJAX Response: ', data);
-
           if (data.error) {
             console.error(data.error);
             return;
           }
 
-          modal.find('.modal-title').text(data.title);
           modal.find('.modal-body img').attr('src', '../model/uploads/images/' + data.file_name + data.file_extension);
-          modal.find('.modal-body p').text(data.description);
+          modal.find('.image-title').text(data.title);
+          modal.find('.image-description').text(data.description);
+          modal.find('.image-updated-at').html(`Actualizado por ultima vez <strong>${data.updated_at}<strong>`);
+          modal.find('.image-created-at').html(`Creado el <strong>${data.created_at}</strong>`);
+
+          $(".download-image-button").attr('href', '/image/download?id=' + imageId);
         },
         error: function (xhr, status, error) {
-          console.error('Error fetching image data: ' + error);
-          console.log('Response: ', xhr.responseText);
+          console.error('Error obteniendo la información de la imagen: ' + error);
+          console.log('Respuesta: ', xhr.responseText);
         }
       });
     }

@@ -58,11 +58,11 @@ $images = $imageController->fetchThumbnails();
               accept=".jpg, .jpeg, .gif, .png, .webp, .heic" hidden required>
             <div>
               <label for="image-title">Título</label>
-              <input type="text" id="image-title" name="image-title">
+              <input type="text" id="image-title" name="image-title" required>
             </div>
             <div>
               <label for="image-description">Descripción</label>
-              <textarea id="image-description" name="description" rows="4" cols="50"></textarea>
+              <textarea id="image-description" name="description" rows="4" cols="50" required></textarea>
             </div>
           </form>
         </div>
@@ -77,19 +77,31 @@ $images = $imageController->fetchThumbnails();
   <!-- View Picture Modal -->
   <div class="modal fade" id="viewPictureModal" tabindex="-1" aria-labelledby="viewPictureModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl modal-fullscreen-lg-down">
       <div class="modal-content">
         <div class="modal-header">
-          <h1 class="modal-title fs-5" id="viewPictureModalLabel">Modal title</h1>
+          <h1 class="modal-title fs-5" id="viewPictureModalLabel"></h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <img src="" alt="" />
-          <p></p>
+          <div class="modal-image-container">
+            <img src="" alt="" />
+          </div>
+          <div class="modal-description-container">
+            <h3 class="image-title mt-4 mb-3"></h3>
+            <p class="image-description mb-4"></p>
+            <p class="image-updated-at mb-1"></p>
+            <p class="image-created-at"></p>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <button type="button" class="btn btn-danger">Eliminar imagen</button>
+          </div>
+          <div>
+            <a type="button" class="btn btn-primary download-image-button" href="">Descargar</a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>
@@ -119,11 +131,11 @@ $images = $imageController->fetchThumbnails();
         echo "<p>Error: " . htmlspecialchars($images['error']) . "</p>";
       } else {
         foreach ($images as $image) {
-          $imagePath = '../model/uploads/thumbnails/' . $image['file_name'] . "_thumbnail.jpeg" ;
+          $imagePath = '../model/uploads/thumbnails/' . htmlspecialchars($image['file_name']) . "_thumbnail.jpeg" ;
           echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "'
                 data-bs-toggle='modal'
                 data-bs-target='#viewPictureModal'
-                data-image-id='" . $image['image_id'] . "'";
+                data-image-id='" . htmlspecialchars($image['image_id']) . "'>";
         }
       }
       ?>

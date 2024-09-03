@@ -78,11 +78,13 @@ class ImageController
         $imagePath = dirname(__DIR__, 1) . '/model/uploads/images/' . $file['name'] . $file_extension;
         move_uploaded_file($file['tmp_name'], $imagePath);
 
-        $image = new Imagick($imagePath);
-        $image->setImageCompressionQuality(70); // 70% of the original quality
-        $image->writeImage($imagePath);
-        $image->clear();
-        $image->destroy();
+        if ($mimetype !== "image/jpeg" && $mimetype !== "image/gif") {
+          $image = new Imagick($imagePath);
+          $image->setImageCompressionQuality(70); // 70% of the original quality
+          $image->writeImage($imagePath);
+          $image->clear();
+          $image->destroy();
+        }
 
         $stmt = $this->dbh->prepare("INSERT INTO images (post_id, file_name, file_extension, file_size, title, description) VALUES (?, ?, ?, ?, ?, ?)");
 
@@ -162,6 +164,10 @@ class ImageController
    */
   public function fetchThumbnails(): array
   {
+    // image_id to store it as data attribute to find the server
+    // file_name to use the correct image on each thumbnail
+    // title for the alt attribute of the image
+    // created_at to order each image from newest to oldest
     $query = "SELECT i.image_id, i.file_name, i.title, p.created_at
               FROM images i
               JOIN posts p ON i.post_id = p.post_id
@@ -228,7 +234,50 @@ class ImageController
 
       return $image ?: null;
     } catch (Exception $e) {
-      return ['error' => "Error fetching image: " . $e->getMessage()];
+      return ['error' => "Error obteniendo la imagen: " . $e->getMessage()];
+    }
+  }
+
+  public function download(): void
+  {
+    $imageId = isset($_GET['id']) ? intval($_GET['id']) : null;
+
+    if ($imageId === null) {
+      echo "ID de imagen no proporcionado.";
+      return;
+    }
+
+    $query = "SELECT file_name, file_extension FROM images WHERE image_id = :image_id";
+
+    try {
+      $stmt = $this->dbh->prepare($query);
+      $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
+      $stmt->execute();
+
+      $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if ($image) {
+        $filePath = dirname(__DIR__, 1) . '/model/uploads/images/' . $image['file_name'] . $image['file_extension'];
+
+        if (file_exists($filePath)) {
+          header('Content-Description: File Transfer');
+          header('Content-Type: application/octet-stream');
+          header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+          header('Expires: 0');
+          header('Cache-Control: must-revalidate');
+          header('Pragma: public');
+          header('Content-Length: ' . filesize($filePath));
+          flush();
+          readfile($filePath);
+          exit;
+        } else {
+          echo "Archivo no encontrado.";
+        }
+      } else {
+        echo "Imagen no encontrada.";
+      }
+    } catch (Exception $e) {
+      echo "Error al obtener la imagen: " . $e->getMessage();
     }
   }
 }
