@@ -15,4 +15,8 @@ class PageController {
   public function not_supported_file_type() {
     require_once(dirname(__DIR__, 1) . '/public/views/not_supported_file_type.php');
   }
+
+  public function file_too_large() {
+    require_once(dirname(__DIR__, 1) . '/public/views/file_too_large.php');
+  }
 }
