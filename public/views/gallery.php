@@ -67,7 +67,7 @@ $images = $imageController->fetchThumbnails();
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="button" class="btn btn-primary" id="submit-picture-form">Guardar imagen</button>
         </div>
       </div>
@@ -96,17 +96,36 @@ $images = $imageController->fetchThumbnails();
         </div>
         <div class="modal-footer d-flex justify-content-between">
           <div>
-            <button type="button" class="btn btn-danger">Eliminar imagen</button>
+            <button type="button" class="btn btn-danger delete-image-button" data-bs-toggle="modal" data-bs-target="#deletePictureModal" data-image-id="">Eliminar imagen</button>
           </div>
           <div>
             <a type="button" class="btn btn-primary download-image-button" href="">Descargar</a>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-warning">Editar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Delete Image Confirmation Modal -->
+  <div class="modal fade" id="deletePictureModal" tabindex="-1" aria-labelledby="deletePictureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Eliminar imagen</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>¿Estás seguro de que deseas eliminar esta imagen?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-bs-toggle='modal' data-bs-target='#viewPictureModal'>Cancelar</button>
+          <button type="button" class="btn btn-danger" id="confirm-delete-button" data-bs-dismiss="modal">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <section class="navbar">
     <img src="/public/assets/brand/nuestras_aventuras.svg" alt="Nuestras Aventuras" />
@@ -131,7 +150,7 @@ $images = $imageController->fetchThumbnails();
         echo "<p>Error: " . htmlspecialchars($images['error']) . "</p>";
       } else {
         foreach ($images as $image) {
-          $imagePath = '../model/uploads/thumbnails/' . htmlspecialchars($image['file_name']) . "_thumbnail.jpeg" ;
+          $imagePath = '../model/uploads/thumbnails/' . htmlspecialchars($image['file_name']) . "_thumbnail.jpeg";
           echo "<img src='$imagePath' alt='" . htmlspecialchars($image['title']) . "'
                 data-bs-toggle='modal'
                 data-bs-target='#viewPictureModal'
