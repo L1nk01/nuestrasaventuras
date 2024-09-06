@@ -1,4 +1,8 @@
 $(document).ready(function () {
+
+  // Opened image id
+  var currentImageId = null;
+
   $("#submit-picture-form").on('click', function () {
     $("#upload-picture-form").submit();
   });
@@ -36,6 +40,8 @@ $(document).ready(function () {
     var imageId = button.data('image-id');
     var modal = $(this);
 
+    currentImageId = imageId;
+
     if (imageId) {
       $.ajax({
         url: '/image/fetch',
@@ -55,10 +61,38 @@ $(document).ready(function () {
           modal.find('.image-created-at').html(`Creado el <strong>${data.created_at}</strong>`);
 
           $(".download-image-button").attr('href', '/image/download?id=' + imageId);
+          $(".delete-image-button").data('image-id', imageId);
         },
         error: function (xhr, status, error) {
-          console.error('Error obteniendo la información de la imagen: ' + error);
-          console.log('Respuesta: ', xhr.responseText);
+          console.error('Error fetching image information: ' + error);
+          console.log('Response: ', xhr.responseText);
+        }
+      });
+    }
+  });
+
+  $("#deletePictureModal").on('show.bs.modal', function (event) {
+    $("#confirm-delete-button").data('image-id', currentImageId);
+  });
+
+  $("#confirm-delete-button").on('click', function () {
+    var imageId = $(this).data('image-id');
+
+    if (imageId) {
+      $.ajax({
+        url: '/image/delete',
+        type: 'POST',
+        data: { id: imageId },
+        dataType: 'json',
+        success: function (response) {
+          if (response.success) {
+            $('img[data-image-id="' + imageId + '"]').remove();
+          } else {
+            console.error(response.error);
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error('Error deleting image from database: ' + error);
         }
       });
     }
