@@ -57,6 +57,12 @@ class ImageController
       $file_size = $file['size']; // in bytes
       $title = isset($_POST['image-title']) ? htmlspecialchars($_POST['image-title']) : '';
       $description = isset($_POST['description']) ? htmlspecialchars($_POST['description']) : '';
+      $maxFileSize = 5 * 1024 * 1024;
+
+      if ($file_size > $maxFileSize) {
+        header("Location: /page/file_too_large");
+        exit();
+      }
 
       if (!in_array($mimetype, $allowed_types)) {
         header("Location: /page/not_supported_file_type");
@@ -238,6 +244,15 @@ class ImageController
     }
   }
 
+  /**
+ * Descarga una imagen del servidor.
+ * 
+ * Este método maneja la descarga de una imagen desde el servidor. Obtiene el ID de la imagen desde
+ * los parámetros GET, valida que exista, y luego busca el archivo en la base de datos y en el sistema de archivos.
+ * Si el archivo existe, lo envía al navegador como una descarga; si no, muestra un mensaje de error.
+ * 
+ * @return void
+ */
   public function download(): void
   {
     $imageId = isset($_GET['id']) ? intval($_GET['id']) : null;
@@ -278,6 +293,63 @@ class ImageController
       }
     } catch (Exception $e) {
       echo "Error al obtener la imagen: " . $e->getMessage();
+    }
+  }
+
+  /**
+ * Elimina una imagen del servidor y la base de datos.
+ * 
+ * Este método maneja la eliminación de una imagen desde el servidor. Obtiene el ID de la imagen desde
+ * los parámetros POST, valida que exista, y luego elimina el archivo de imagen y su miniatura del sistema
+ * de archivos. Después, elimina el registro correspondiente de la base de datos. Si ocurre un error en cualquier
+ * etapa del proceso, se revierte la transacción y se devuelve un mensaje de error.
+ * 
+ * @return void
+ */
+  public function delete()
+  {
+    $imageId = isset($_POST['id']) ? intval($_POST['id']) : null;
+
+    if ($imageId === null) {
+      echo json_encode(['success' => false, 'error' => 'ID de imagen no proporcionado.']);
+      return;
+    }
+
+    try {
+      $this->dbh->beginTransaction();
+
+      $query = "SELECT file_name, file_extension FROM images WHERE image_id = :image_id";
+      $stmt = $this->dbh->prepare($query);
+      $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
+      $stmt->execute();
+      $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if (!$image) {
+        throw new Exception("Imagen no encontrada.");
+      }
+
+      $imagePath = dirname(__DIR__, 1) . '/model/uploads/images/' . $image['file_name'] . $image['file_extension'];
+      $thumbnailPath = dirname(__DIR__, 1) . '/model/uploads/thumbnails/' . $image['file_name'] . '_thumbnail.jpeg';
+
+      if (file_exists($imagePath)) {
+        unlink($imagePath);
+      }
+
+      if (file_exists($thumbnailPath)) {
+        unlink($thumbnailPath);
+      }
+
+      $query = "DELETE FROM images WHERE image_id = :image_id";
+      $stmt = $this->dbh->prepare($query);
+      $stmt->bindParam(':image_id', $imageId, PDO::PARAM_INT);
+      $stmt->execute();
+
+      $this->dbh->commit();
+
+      echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+      $this->dbh->rollBack();
+      echo json_encode(['success' => false, 'error' => 'Error eliminando la imagen: ' . $e->getMessage()]);
     }
   }
 }
