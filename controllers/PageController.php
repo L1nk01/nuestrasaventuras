@@ -1,4 +1,9 @@
 <?php
+
+/**
+ * PageController handles the navigation between different views of the application.
+ * It loads the appropriate view files based on the methods called.
+ */
 class PageController {
   public function home() {
     require_once(dirname(__DIR__, 1) . '/public/views/home.php');
