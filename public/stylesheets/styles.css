@@ -105,6 +105,12 @@ body {
   gap: 10px;
 }
 
+.file-status {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #uploaded-picture-preview {
   position: relative;
 }
@@ -153,10 +159,6 @@ body {
 #images-container img:hover {
   transform: scale(1.01);
   cursor: pointer;
-}
-
-#viewPictureModal .modal-body {
-  
 }
 
 .modal-image-container {
