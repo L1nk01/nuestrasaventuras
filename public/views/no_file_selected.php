@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Solicitud no procesada</title>
+  <link rel="icon" href="/public/assets/icons/favicon.ico" type="image/x-icon">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/public/stylesheets/fonts.css">
